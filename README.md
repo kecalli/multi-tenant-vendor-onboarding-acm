@@ -8,15 +8,18 @@ This repository contains the architecture and blueprints to demonstrate automate
 * Strict Tenant Isolation: Restricts vendor visibility entirely to assigned ACM multi-cluster perspectives while removing default OpenShift administrative and developer viewpoints.
 * Self-Service Catalog Integration: Pre-loads pre-approved application blueprints directly inside the ACM Application creation dropdown wizard.
 
-Repository Architecture
+## Repository Architecture
+
 The repository is structured to remain flat, lightweight, and optimized for a zero-copy-paste live demonstration:
 
+```text
 multi-tenant-vendor-onboarding-acm/
 ├── README.md                            # Documentation and Live Demo Script
 ├── 1-master-onboarding-policy.yaml      # Reusable Blueprint Policy (Dormant Template)
 └── example-vendor-applications/         # Isolated application subfolder for vendor self-service
     ├── app-subscription-channel.yaml    # Pre-configured ACM Git Channel blueprint
     └── sample-workload-manifest.yaml    # Example workload template selectable via dropdown wizard
+
 
 Operational Workflows
 Onboarding a New Vendor (Admin GUI Steps)
