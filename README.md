@@ -19,6 +19,8 @@ multi-tenant-vendor-onboarding-acm/
 └── example-vendor-applications/         # Isolated application subfolder for vendor self-service
     ├── app-subscription-channel.yaml    # Pre-configured ACM Git Channel blueprint
     └── sample-workload-manifest.yaml    # Example workload template selectable via dropdown wizard
+```text
+
 ## Operational Workflows
 
 ### Onboarding a New Vendor (Admin GUI Steps)
