@@ -49,9 +49,10 @@ With the central identity established, the platform administrator prepares the t
 ACM processes this as a standalone policy instantiation. The governance engine instantly deploys an isolated namespace (`vendor-a-apps`) and plants a `RoleBinding` waiting to map to the exact string passed by the IdP token upon first login.
 
 ### Phase 3: First-Time Login & JIT Payoff (Tenant Experience)
-To demonstrate zero-touch provisioning, log in via a private browser window as the newly created vendor:
+To demonstrate zero-touch provisioning, log in via a private browser window as the newly created vendor to witness the automated cross-console interface updates:
 
 1. Navigate to the cluster console and select the **OIDC/SSO Login Option**. Log in using `vendor-a-user`.
 2. OpenShift validates the token string against the IdP, dynamically generates the shadow user, and maps them to the pre-staged RBAC policy—instantly isolating them to their sandbox namespace.
-3. Locate the custom **"Vendor Tools"** section in the navigation sidebar and click the **"vendor-a Registry"** shortcut link.
-4. Red Hat Quay intercepts the login, runs a silent handshake with the IdP, and leverages **Just-In-Time (JIT) provisioning** to dynamically auto-create their Quay user profile and private vendor image repository space on the fly.
+3. **The Multi-Cluster Console Payoff:** When the user accesses the **RHACM Hub Console**, they can look at the global utility header in the top-right corner and click the **Application Launcher grid icon (9-dot menu)**.
+4. Drop down the menu to see a dedicated section titled **"Vendor Developer Tools"** with a direct, branded link labeled **"Vendor A Quay Registry"**.
+5. The vendor clicks the shortcut. Red Hat Quay intercepts the login redirect, runs a silent OIDC handshake with the same central IdP, and leverages **Just-In-Time (JIT) provisioning** to dynamically auto-create their Quay user profile and private organization repository space (`/vendor-a`) on the fly.
