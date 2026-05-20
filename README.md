@@ -1,7 +1,7 @@
-Multi-Tenant Vendor Onboarding via ACM Policies
+#Multi-Tenant Vendor Onboarding via ACM Policies
 This repository contains the architecture and blueprints to demonstrate automated, secure, third-party vendor onboarding using Red Hat Advanced Cluster Management (ACM).
 
-Key Features Demonstrated:
+##Key Features Demonstrated:
 Admin GUI-Driven Onboarding: Admins can onboard tenants by executing a global find-and-replace on a single template string entirely within the ACM browser window.
 
 Console Customization: Injects an isolated sidebar navigation shortcut that maps directly to the vendor's dedicated toolsets.
