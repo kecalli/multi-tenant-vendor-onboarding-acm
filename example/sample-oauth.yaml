@@ -1,0 +1,23 @@
+apiVersion: config.openshift.io/v1
+kind: OAuth
+metadata:
+  name: cluster
+spec:
+  identityProviders:
+  - name: keycloak-idp             # The name of the login button on the OCP login screen
+    mappingMethod: claim           # CRITICAL: Maps the exact IdP string to the OCP User object
+    type: OpenID
+    openID:
+      claims:
+        id:
+        - sub                      # Unique token identifier
+        preferredUsername:
+        - preferred_username       # Extracts the exact "vendor-a-user" string for RBAC matching
+        name:
+        - name
+        email:
+        - email
+      clientID: ocp-platform-client # Registers this cluster as a client inside Keycloak
+      clientSecret:
+        name: keycloak-client-secret-res # Secret containing the OIDC client password password
+      issuer: https://keycloak-server.apps.platform-customer.com/auth/realms/platform-realm
