@@ -1,19 +1,19 @@
 apiVersion: policy.open-cluster-management.io/v1
 kind: Policy
 metadata:
-  name: template-onboard-vendor
+  name: policy-onboard-vendor-alpha # <-- Unique name for this specific instance
   namespace: open-cluster-management-policies
   annotations:
-    policy.open-cluster-management.io/description: "Onboard Vendor Blueprint Template"
+    policy.open-cluster-management.io/description: "Onboard Vendor Alpha Environment"
 spec:
-  disabled: true
+  disabled: false # <-- Turn it on so it deploys instantly
   remediationAction: enforce
   policy-templates:
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
         metadata:
-          name: config-vendor-templated-env
+          name: config-vendor-alpha-env
         spec:
           remediationAction: enforce
           severity: high
@@ -25,19 +25,19 @@ spec:
                 apiVersion: v1
                 kind: Namespace
                 metadata:
-                  name: '{{hub fromConfigMap "open-cluster-management-policies" "vendor-config" "namespace" hub}}'
+                  name: vendor-alpha-apps # <-- Plain text name
 
-            # 2. ENFORCE RESTRICTED RBAC (Locked to their namespace)
+            # 2. ENFORCE RESTRICTED RBAC
             - complianceType: musthave
               objectDefinition:
                 apiVersion: rbac.authorization.k8s.io/v1
                 kind: RoleBinding
                 metadata:
                   name: vendor-admin-binding
-                  namespace: '{{hub fromConfigMap "open-cluster-management-policies" "vendor-config" "namespace" hub}}'
+                  namespace: vendor-alpha-apps # <-- Plain text target
                 subjects:
                 - kind: User
-                  name: '{{hub fromConfigMap "open-cluster-management-policies" "vendor-config" "username" hub}}'
+                  name: vendor-alpha-user # <-- Plain text username
                   apiGroup: rbac.authorization.k8s.io
                 roleRef:
                   kind: ClusterRole
@@ -50,11 +50,11 @@ spec:
                 apiVersion: console.openshift.io/v1
                 kind: ConsoleLink
                 metadata:
-                  name: '{{hub fromConfigMap "open-cluster-management-policies" "vendor-config" "name" hub}}-registry-link'
+                  name: alpha-registry-link # <-- Plain text name
                 spec:
-                  href: '{{hub fromConfigMap "open-cluster-management-policies" "vendor-config" "quayUrl" hub}}'
+                  href: "https://quay-server.apps.platform-customer.com/vendor-alpha" # <-- Direct URL
                   location: NavigationMenu
-                  text: '{{hub fromConfigMap "open-cluster-management-policies" "vendor-config" "displayName" hub}} Registry'
+                  text: "Vendor Alpha Registry"
                   navigationMenu:
                     section: Vendor Tools
 
@@ -86,21 +86,21 @@ spec:
 apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
 metadata:
-  name: binding-template-onboard-vendor
+  name: binding-onboard-vendor-alpha
   namespace: open-cluster-management-policies
 placementRef:
-  name: placement-template-onboard-vendor
+  name: placement-onboard-vendor-alpha
   apiGroup: cluster.open-cluster-management.io
   kind: Placement
 subjects:
-- name: template-onboard-vendor
+- name: policy-onboard-vendor-alpha
   apiGroup: policy.open-cluster-management.io
   kind: Policy
 ---
 apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
 metadata:
-  name: placement-template-onboard-vendor
+  name: placement-onboard-vendor-alpha
   namespace: open-cluster-management-policies
 spec:
   predicates:
