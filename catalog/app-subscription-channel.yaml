@@ -6,3 +6,4 @@ metadata:
 spec:
   type: Git
   pathname: 'https://github.com/your-organization/multi-tenant-vendor-onboarding.git'
+  path: example_vendor_applications # <-- Instructs ACM to look inside this specific subfolder for apps
