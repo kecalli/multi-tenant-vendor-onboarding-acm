@@ -2,13 +2,11 @@
 This repository contains the architecture and blueprints to demonstrate automated, secure, third-party vendor onboarding using Red Hat Advanced Cluster Management (ACM).
 
 ## Key Features Demonstrated:
-Admin GUI-Driven Onboarding: Admins can onboard tenants by executing a global find-and-replace on a single template string entirely within the ACM browser window.
 
-Console Customization: Injects an isolated sidebar navigation shortcut that maps directly to the vendor's dedicated toolsets.
-
-Strict Tenant Isolation: Restricts vendor visibility entirely to assigned ACM multi-cluster perspectives while removing default OpenShift administrative and developer viewpoints.
-
-Self-Service Catalog Integration: Pre-loads pre-approved application blueprints directly inside the ACM Application creation dropdown wizard.
+* Admin GUI-Driven Onboarding: Admins can onboard tenants by executing a global find-and-replace on a single template string entirely within the ACM browser window.
+* Console Customization: Injects an isolated sidebar navigation shortcut that maps directly to the vendor's dedicated toolsets.
+* Strict Tenant Isolation: Restricts vendor visibility entirely to assigned ACM multi-cluster perspectives while removing default OpenShift administrative and developer viewpoints.
+* Self-Service Catalog Integration: Pre-loads pre-approved application blueprints directly inside the ACM Application creation dropdown wizard.
 
 Repository Architecture
 The repository is structured to remain flat, lightweight, and optimized for a zero-copy-paste live demonstration:
