@@ -61,16 +61,11 @@ repository space (`/vendor-a`) on the fly.
 ### Phase 4: Self-Service Application Deployment (The Workload Story)
 Once the identity and infrastructure are established, showcase how the vendor can independently deploy authorized multi-cluster software workloads using ACM's GitOps subscription model:
 
-Switch to or stay logged in as vendor-a-user inside the ACM Hub Console.
-
-Navigate to Applications and click the blue Create application button in the top right.
-
-Under the Repository Type (Source) selection field, select Git from the dropdown menu.
-
-Use the pre-configured subscription channels to point ACM to this repository. The user sets the path field to target the /example-vendor-applications directory.
-
-In the Destination field, the vendor enters their assigned sandbox namespace (vendor-a-apps).
-
-Click Save in the top right.
+1. Switch to or stay logged in as vendor-a-user inside the ACM Hub Console.
+2. Navigate to Applications and click the blue Create application button in the top right.
+3. Under the Repository Type (Source) selection field, select Git from the dropdown menu.
+4. Use the pre-configured subscription channels to point ACM to this repository. The user sets the path field to target the /example-vendor-applications directory.
+5. In the Destination field, the vendor enters their assigned sandbox namespace (vendor-a-apps).
+6. Click Save in the top right.
 
 The Application Topology Payoff: ACM instantly maps the Git repository and generates a live, interactive Topology Map on the screen. The vendor can watch in real-time as the subscription channel pulls sample-workload-manifest.yaml out of Git, verifies permissions, and spins up the application pods within their isolated namespace boundaries.
