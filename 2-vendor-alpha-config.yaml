@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vendor-config
+  namespace: open-cluster-management-policies
+data:
+  name: "alpha"
+  displayName: "Vendor Alpha (Core)"
+  namespace: "vendor-alpha-apps"
+  username: "vendor-alpha-user"
+  quayUrl: "https://quay-server.apps.platform-customer.com/alpha"
