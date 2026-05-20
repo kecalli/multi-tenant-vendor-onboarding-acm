@@ -1,0 +1,106 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: policy-dynamic-vendor-onboarding
+  namespace: open-cluster-management-policies
+spec:
+  disabled: false
+  remediationAction: enforce
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: config-vendor-templated-env
+        spec:
+          remediationAction: enforce
+          severity: high
+          object-templates:
+
+            # 1. GENERATE THE ISOLATED NAMESPACE
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Namespace
+                metadata:
+                  name: '{{hub fromConfigMap "open-cluster-management-policies" "vendor-config" "namespace" hub}}'
+
+            # 2. ENFORCE RESTRICTED RBAC (Locked to their namespace)
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: rbac.authorization.k8s.io/v1
+                kind: RoleBinding
+                metadata:
+                  name: vendor-admin-binding
+                  namespace: '{{hub fromConfigMap "open-cluster-management-policies" "vendor-config" "namespace" hub}}'
+                subjects:
+                - kind: User
+                  name: '{{hub fromConfigMap "open-cluster-management-policies" "vendor-config" "username" hub}}'
+                  apiGroup: rbac.authorization.k8s.io
+                roleRef:
+                  kind: ClusterRole
+                  name: admin
+                  apiGroup: rbac.authorization.k8s.io
+
+            # 3. INJECT THE REGISTRY LINK INTO THE NAVIGATION SIDEBAR
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: console.openshift.io/v1
+                kind: ConsoleLink
+                metadata:
+                  name: '{{hub fromConfigMap "open-cluster-management-policies" "vendor-config" "name" hub}}-registry-link'
+                spec:
+                  href: '{{hub fromConfigMap "open-cluster-management-policies" "vendor-config" "quayUrl" hub}}'
+                  location: NavigationMenu
+                  text: '{{hub fromConfigMap "open-cluster-management-policies" "vendor-config" "displayName" hub}} Registry'
+                  navigationMenu:
+                    section: Vendor Tools
+
+            # 4. REMOVE LOCAL OCP CLUSTER PERSPECTIVES FROM THE VENDOR
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: operator.openshift.io/v1
+                kind: Console
+                metadata:
+                  name: cluster
+                spec:
+                  customization:
+                    perspectives:
+                      - id: admin
+                        visibility:
+                          state: AccessReview
+                          accessReview:
+                            missing:
+                              resource: clusterrolebindings
+                              verb: list
+                      - id: dev
+                        visibility:
+                          state: AccessReview
+                          accessReview:
+                            missing:
+                              resource: clusterrolebindings
+                              verb: list
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: binding-dynamic-vendor-onboarding
+  namespace: open-cluster-management-policies
+placementRef:
+  name: placement-dynamic-vendor-onboarding
+  apiGroup: apps.open-cluster-management.io
+  kind: PlacementRule
+subjects:
+- name: policy-dynamic-vendor-onboarding
+  apiGroup: policy.open-cluster-management.io
+  kind: Policy
+---
+apiVersion: apps.open-cluster-management.io/v1
+kind: PlacementRule
+metadata:
+  name: placement-dynamic-vendor-onboarding
+  namespace: open-cluster-management-policies
+spec:
+  clusterSelector:
+    matchExpressions:
+      - {key: local-cluster, operator: In, values: ["true"]}
