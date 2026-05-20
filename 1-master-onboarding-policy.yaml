@@ -6,7 +6,7 @@ metadata:
   annotations:
     policy.open-cluster-management.io/description: "Onboard Workspace for generic-vendor" # <-- SEARCH & REPLACE HERE
 spec:
-  disabled: false # Ready to fire immediately when you save it as a new policy
+  disabled: false 
   remediationAction: enforce
   policy-templates:
     - objectDefinition:
@@ -27,7 +27,7 @@ spec:
                 metadata:
                   name: generic-vendor-apps # <-- SEARCH & REPLACE HERE
 
-            # 2. ENFORCE RESTRICTED RBAC
+            # 2. ENFORCE RESTRICTED RBAC (Tied to Central IdP String Match)
             - complianceType: musthave
               objectDefinition:
                 apiVersion: rbac.authorization.k8s.io/v1
@@ -37,28 +37,29 @@ spec:
                   namespace: generic-vendor-apps # <-- SEARCH & REPLACE HERE
                 subjects:
                 - kind: User
-                  name: generic-vendor-user # <-- SEARCH & REPLACE HERE
+                  name: generic-vendor-user # <-- SEARCH & REPLACE HERE (Maps 1:1 to SSO token string)
                   apiGroup: rbac.authorization.k8s.io
                 roleRef:
                   kind: ClusterRole
                   name: admin
                   apiGroup: rbac.authorization.k8s.io
 
-            # 3. INJECT THE REGISTRY LINK INTO THE NAVIGATION SIDEBAR
+            # 3. INJECT THE REGISTRY SHORTCUT INTO THE ACM HUB APPLICATION LAUNCHER (9-DOT MENU)
             - complianceType: musthave
               objectDefinition:
                 apiVersion: console.openshift.io/v1
                 kind: ConsoleLink
                 metadata:
-                  name: generic-vendor-registry-link # <-- SEARCH & REPLACE HERE
+                  name: generic-vendor-acm-registry-shortcut # <-- SEARCH & REPLACE HERE
                 spec:
                   href: "https://quay-server.apps.platform-customer.com/generic-vendor" # <-- SEARCH & REPLACE HERE
-                  location: NavigationMenu
                   text: "generic-vendor Registry" # <-- SEARCH & REPLACE HERE
-                  navigationMenu:
-                    section: Vendor Tools
+                  location: ApplicationMenu 
+                  applicationMenu:
+                    section: Vendor Developer Tools
+                    imageURL: https://raw.githubusercontent.com/quay/quay/master/static/img/quay-horizontal-color.svg
 
-            # 4. REMOVE LOCAL OCP CLUSTER PERSPECTIVES FROM THE VENDOR
+            # 4. REMOVE LOCAL OCP CLUSTER PERSPECTIVES FROM THE VENDOR VIEW
             - complianceType: musthave
               objectDefinition:
                 apiVersion: operator.openshift.io/v1
