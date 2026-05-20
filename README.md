@@ -55,4 +55,22 @@ To demonstrate zero-touch provisioning, log in via a private browser window as t
 2. OpenShift validates the token string against the IdP, dynamically generates the shadow user, and maps them to the pre-staged RBAC policy—instantly isolating them to their sandbox namespace.
 3. **The Multi-Cluster Console Payoff:** When the user accesses the **RHACM Hub Console**, they can look at the global utility header in the top-right corner and click the **Application Launcher grid icon (9-dot menu)**.
 4. Drop down the menu to see a dedicated section titled **"Vendor Developer Tools"** with a direct, branded link labeled **"Vendor A Quay Registry"**.
-5. The vendor clicks the shortcut. Red Hat Quay intercepts the login redirect, runs a silent OIDC handshake with the same central IdP, and leverages **Just-In-Time (JIT) provisioning** to dynamically auto-create their Quay user profile and private organization repository space (`/vendor-a`) on the fly.
+5. The vendor clicks the shortcut. Red Hat Quay intercepts the login redirect, runs a silent OIDC handshake with the same central IdP, and leverages **Just-In-Time (JIT) provisioning** to dynamically auto-create their Quay user profile and private organization 
+repository space (`/vendor-a`) on the fly.
+
+### Phase 4: Self-Service Application Deployment (The Workload Story)
+Once the identity and infrastructure are established, showcase how the vendor can independently deploy authorized multi-cluster software workloads using ACM's GitOps subscription model:
+
+Switch to or stay logged in as vendor-a-user inside the ACM Hub Console.
+
+Navigate to Applications and click the blue Create application button in the top right.
+
+Under the Repository Type (Source) selection field, select Git from the dropdown menu.
+
+Use the pre-configured subscription channels to point ACM to this repository. The user sets the path field to target the /example-vendor-applications directory.
+
+In the Destination field, the vendor enters their assigned sandbox namespace (vendor-a-apps).
+
+Click Save in the top right.
+
+The Application Topology Payoff: ACM instantly maps the Git repository and generates a live, interactive Topology Map on the screen. The vendor can watch in real-time as the subscription channel pulls sample-workload-manifest.yaml out of Git, verifies permissions, and spins up the application pods within their isolated namespace boundaries.
