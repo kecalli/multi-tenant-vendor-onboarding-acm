@@ -91,14 +91,14 @@ spec:
                 namespace: generic-vendor-apps
               spec:
                 hard:
-                  requests.cpu: "2"
-                  requests.memory: 4Gi
-                  limits.cpu: "4"
-                  limits.memory: 8Gi
-                  pods: "20"
+                  requests.cpu: "QUOTA_CPU_REQUEST"
+                  requests.memory: QUOTA_MEMORY_REQUEST
+                  limits.cpu: "QUOTA_CPU_LIMIT"
+                  limits.memory: QUOTA_MEMORY_LIMIT
+                  pods: "QUOTA_PODS"
                   services: "10"
                   persistentvolumeclaims: "5"
-                  requests.storage: 20Gi
+                  requests.storage: QUOTA_STORAGE
 
           # ------------------------------------------------------------------
           # 4. LIMIT RANGE — sets default container-level limits so pods without

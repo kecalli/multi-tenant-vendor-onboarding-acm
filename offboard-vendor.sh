@@ -156,17 +156,51 @@ delete_resource placementbinding "binding-onboard-${VENDOR}"  "open-cluster-mana
 info "Removing ConsoleLink..."
 delete_resource consolelink "${VENDOR}-registry-shortcut"
 
-info "Removing namespace and all contents..."
-echo ""
-echo "  NOTE: Namespace deletion can sometimes hang in OpenShift when ACM-managed"
-echo "        resources inside it are still being reconciled. If the namespace gets"
-echo "        stuck in 'Terminating' state, force-remove it with:"
-echo ""
-echo "          oc get namespace ${VENDOR}-apps -o json \\"
-echo "            | jq '.spec.finalizers = []' \\"
-echo "            | oc replace --raw /api/v1/namespaces/${VENDOR}-apps/finalize -f -"
-echo ""
-delete_resource namespace "${VENDOR}-apps"
+# Wait briefly for ACM to stop reconciling after policy deletion
+info "Waiting for ACM to stop reconciling (10s)..."
+sleep 10
+
+info "Removing all resources from namespace ${VENDOR}-apps..."
+if oc get namespace "${VENDOR}-apps" &>/dev/null 2>&1; then
+  if [[ "$DRY_RUN" == true ]]; then
+    echo "    [DRY RUN] would delete all resources in namespace ${VENDOR}-apps"
+  else
+    # Explicitly delete known workload resource types to avoid finalizer hangs
+    for resource_type in deployments services routes configmaps rolebindings resourcequotas limitranges networkpolicies; do
+      oc delete "$resource_type" --all -n "${VENDOR}-apps" --ignore-not-found 2>/dev/null || true
+    done
+    info "Workload resources removed."
+  fi
+fi
+
+info "Removing namespace ${VENDOR}-apps..."
+info "Note: You may see 'namespace deleted' from the API — this is normal."
+info "      If the prompt does not return, press Ctrl-C and check namespace status."
+if [[ "$DRY_RUN" == true ]]; then
+  echo "    [DRY RUN] would delete namespace ${VENDOR}-apps"
+else
+  # Strip known finalizers before deletion to prevent hanging
+  info "Removing namespace finalizers..."
+  oc patch namespace "${VENDOR}-apps" --type=json     -p='[{"op":"remove","path":"/metadata/finalizers"}]' &>/dev/null 2>&1 || true
+
+  oc delete namespace "${VENDOR}-apps" --ignore-not-found
+
+  # Wait for namespace to terminate, force-remove if still stuck
+  info "Waiting for namespace to terminate..."
+  WAIT_SECS=0
+  MAX_WAIT=60
+  while oc get namespace "${VENDOR}-apps" &>/dev/null 2>&1; do
+    if [[ $WAIT_SECS -ge $MAX_WAIT ]]; then
+      info "Namespace stuck in Terminating — force-removing via finalize API..."
+      oc get namespace "${VENDOR}-apps" -o json         | jq '.spec.finalizers = []'         | oc replace --raw /api/v1/namespaces/${VENDOR}-apps/finalize -f -
+      break
+    fi
+    echo "    ... still terminating (${WAIT_SECS}s elapsed)"
+    sleep 5
+    WAIT_SECS=$((WAIT_SECS + 5))
+  done
+  info "Namespace ${VENDOR}-apps removed."
+fi
 
 # --------------------------------------------------------------------------
 # Summary
