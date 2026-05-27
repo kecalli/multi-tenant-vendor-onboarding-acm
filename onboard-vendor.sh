@@ -95,7 +95,7 @@ run_preflight() {
 
   local failed=false
 
-  if ! oc get policy policy-platform-console-vendor-isolation \
+  if ! oc get policy policy-console-isolation \
        -n open-cluster-management-policies &>/dev/null 2>&1; then
     warn "Platform console policy not found."
     warn "Run: oc apply -f 0-platform-console-policy.yaml"
