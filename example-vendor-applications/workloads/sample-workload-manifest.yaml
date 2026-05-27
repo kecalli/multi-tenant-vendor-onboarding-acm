@@ -1,0 +1,110 @@
+# =============================================================================
+# Sample Vendor Workload
+#
+# These manifests live in example-vendor-applications/workloads/ and are
+# pulled by the ACM Subscription for each onboarded vendor.
+#
+# Stack:
+#   ConfigMap  — app configuration, demonstrates config injection
+#   Deployment — properly resourced nginx, shows pods in ACM topology
+#   Service    — wires up port 8080, shows service link in topology
+#   Route      — exposes the app externally, completes the topology graph
+#
+# The namespace is NOT defined here — the Subscription targets the vendor's
+# namespace (generic-vendor-apps) so these resources land there automatically.
+#
+# Image: quay.io/bitnami/nginx is public and requires no auth, making it
+# reliable for demos without depending on the customer's internal registry.
+# Swap for a real vendor image when available.
+# =============================================================================
+ 
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sample-app-config
+  labels:
+    app: vendor-sample-app
+data:
+  APP_ENV: "demo"
+  APP_PORT: "8080"
+  VENDOR_MESSAGE: "Hello from your vendor sandbox environment"
+ 
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vendor-sample-app
+  labels:
+    app: vendor-sample-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vendor-sample-app
+  template:
+    metadata:
+      labels:
+        app: vendor-sample-app
+    spec:
+      containers:
+      - name: app
+        image: quay.io/bitnami/nginx:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        envFrom:
+        - configMapRef:
+            name: sample-app-config
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 20
+ 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vendor-sample-app
+  labels:
+    app: vendor-sample-app
+spec:
+  selector:
+    app: vendor-sample-app
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  type: ClusterIP
+ 
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: vendor-sample-app
+  labels:
+    app: vendor-sample-app
+spec:
+  to:
+    kind: Service
+    name: vendor-sample-app
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+ 
