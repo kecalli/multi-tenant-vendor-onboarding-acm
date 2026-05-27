@@ -1,73 +1,118 @@
-# Multi-Tenant Vendor Onboarding via ACM Policies
-
+Multi-Tenant Vendor Onboarding via ACM Policies
 This repository contains the architecture and blueprints to demonstrate automated, secure, third-party vendor onboarding using Red Hat Advanced Cluster Management (ACM) integrated with an enterprise Single Sign-On (SSO) identity plane.
-
-## Key Features Demonstrated:
-* **Identity Provider (IdP) as Source of Truth:** Onboarding begins at the central authentication layer (e.g., Keycloak, Okta, Azure AD), enforcing enterprise governance across all platform tools.
-* **Admin GUI-Driven Access Prep:** Platforms engineers prepare cluster permissions by executing a global find-and-replace on a single template string entirely within the ACM browser window.
-* **Just-In-Time (JIT) Registry Provisioning:** Eliminates manual image registry setup; the vendor's dedicated Quay organization and user profile are automatically generated upon their first SSO login handshake.
-* **Strict Tenant Console Isolation:** Customizes navigation shortcuts for external users, routing them strictly to their multi-cluster perspectives while removing default OpenShift infrastructure viewpoints.
-
+Key Features Demonstrated
+Identity Provider (IdP) as Source of Truth: Onboarding begins at the central authentication layer (e.g., Keycloak, Okta, Azure AD), enforcing enterprise governance across all platform tools.
+Script-Driven Vendor Onboarding: Platform engineers onboard a new vendor by running a single shell script. No manual YAML editing or copy-paste required.
+Policy-Enforced Tenant Isolation: Each vendor receives an isolated namespace with scoped RBAC, resource quotas, and network policies enforced continuously by ACM governance.
+Just-In-Time (JIT) Registry Provisioning: Eliminates manual image registry setup; the vendor's dedicated Quay organization and user profile are automatically generated upon their first SSO login handshake.
+ACM-Only Vendor Experience: Vendors interact exclusively through the ACM hub console. OpenShift infrastructure perspectives are hidden, routing external users strictly to their application sandbox.
+Pre-Wired Self-Service App Catalog: Approved sample workloads are automatically deployed and visible to the vendor in the ACM Applications topology view on first login — no manual app creation steps required.
 ---
-
-## Repository Architecture
-
-The repository remains flat, lightweight, and optimized for a clean, zero-copy-paste live demonstration flow:
-
-```text
-multi-tenant-vendor-onboarding-acm/
-├── 0-platform-console-policy.yaml       # apply once, platform admin
-├── 1-master-onboarding-policy.yaml      # per-vendor, rendered by script
-└── example-vendor-applications/
-    ├── 0-vendor-app-channel.yaml        # apply once, platform admin
-    ├── 1-vendor-sample-app-subscription.yaml  # per-vendor, rendered by script
-    └── workloads/
-        └── sample-workload-manifest.yaml      # static, pulled by Subscription
+Repository Architecture
 ```
-
+multi-tenant-vendor-onboarding-acm/
+├── README.md
+├── onboard-vendor.sh                         # Vendor onboarding script (run once per vendor)
+├── 0-platform-console-policy.yaml           # One-time platform policy (apply before first vendor)
+├── 1-master-onboarding-policy.yaml          # Per-vendor policy template (rendered by script)
+└── example-vendor-applications/
+    ├── 0-vendor-app-channel.yaml            # One-time Git channel (apply before first vendor)
+    ├── 1-vendor-sample-app-subscription.yaml  # Per-vendor app subscription (rendered by script)
+    └── workloads/
+        └── sample-workload-manifest.yaml    # Static workload manifests pulled by subscription
+```
+File Roles
+File	Who applies it	When
+`0-platform-console-policy.yaml`	Platform admin	Once, before first vendor onboarded
+`example-vendor-applications/0-vendor-app-channel.yaml`	Platform admin	Once, before first vendor onboarded
+`onboard-vendor.sh`	Platform admin	Once per vendor
+`1-master-onboarding-policy.yaml`	Rendered and applied by `onboard-vendor.sh`	Per vendor
+`example-vendor-applications/1-vendor-sample-app-subscription.yaml`	Rendered and applied by `onboard-vendor.sh`	Per vendor
+`example-vendor-applications/workloads/sample-workload-manifest.yaml`	Pulled from Git by ACM subscription	Automatically
 ---
+Prerequisites
+Red Hat OpenShift cluster with ACM hub installed
+`oc` CLI installed and logged in as a cluster admin
+An Identity Provider (IdP) configured in OpenShift (Keycloak, Okta, Azure AD, etc.)
+Red Hat Quay configured with JIT provisioning against the same IdP (for Phase 3)
+---
+One-Time Platform Setup
+These steps are performed once by a platform administrator before any vendors are onboarded.
+1. Apply the platform console policy
+This policy hides the OpenShift admin and developer perspectives from vendor users cluster-wide. It manages the `Console` singleton CR and must live outside per-vendor policies to avoid conflicts.
+```bash
+oc apply -f 0-platform-console-policy.yaml
+```
+2. Apply the vendor app channel
+This creates the ACM `Channel` that points at this Git repository. All vendor app subscriptions reference this channel.
+```bash
+oc apply -f example-vendor-applications/0-vendor-app-channel.yaml
+```
+---
+Operational Workflows
+Phase 1: Onboarding the Identity (IdP Control Plane)
+To establish a single corporate identity across ACM, OpenShift, and Quay, the vendor profile is created at the centralized authentication layer first:
+Open your corporate Identity Provider dashboard (e.g., Keycloak).
+Create a new user identity matching the vendor naming convention (e.g., `vendor-a-user`).
+Set a temporary credential. This user is now globally authorized via OIDC/OAuth across all connected platforms.
+Phase 2: Onboarding the Vendor (Platform Admin)
+With the identity established, the platform administrator runs the onboarding script. This replaces all manual YAML editing and applies both the ACM governance policy and the sample app subscription in a single step.
+```bash
+# Preview what will be applied without touching the cluster
+./onboard-vendor.sh --vendor vendor-a --dry-run
 
-## Operational Workflows
-
-### Phase 1: Onboarding the Identity (IdP Control Plane)
-To establish a single corporate identity across ACM, OpenShift, and Quay, the vendor profile is generated at the centralized authentication layer first:
-
-1. Open your corporate Identity Provider dashboard (e.g., Keycloak).
-2. Create a new user identity matching the target vendor naming convention (e.g., `vendor-a-user`).
-3. Set a temporary credential. This user account is now instantly globally authorized via OIDC/OAuth.
-
-### Phase 2: Pre-Staging Cluster Access (Admin GUI Steps)
-With the central identity established, the platform administrator prepares the target environment boundaries inside the ACM console:
-
-1. Navigate to **Governance** ➔ **Policies** inside the ACM console and select the dormant `template-onboard-vendor` blueprint.
-2. Click **Edit YAML** to open the embedded browser code editor.
-3. Press **`Ctrl + F`** (or `Cmd + F` on Mac) to bring up the inline search-and-replace panel.
-4. Input the following configuration tokens:
-   * **Search For:** `generic-vendor`
-   * **Replace With:** `vendor-a` *(or your target partner name, e.g., `alpha`, `beta`)*
-5. Click the **Global Replace All** icon (the stacked `ab` over `ab` icon on the far right of the replace input text box).
-6. Click the blue **Save** button.
-
-ACM processes this as a standalone policy instantiation. The governance engine instantly deploys an isolated namespace (`vendor-a-apps`) and plants a `RoleBinding` waiting to map to the exact string passed by the IdP token upon first login.
-
-### Phase 3: First-Time Login & JIT Payoff (Tenant Experience)
-To demonstrate zero-touch provisioning, log in via a private browser window as the newly created vendor to witness the automated cross-console interface updates:
-
-1. Navigate to the cluster console and select the **OIDC/SSO Login Option**. Log in using `vendor-a-user`.
-2. OpenShift validates the token string against the IdP, dynamically generates the shadow user, and maps them to the pre-staged RBAC policy—instantly isolating them to their sandbox namespace.
-3. **The Multi-Cluster Console Payoff:** When the user accesses the **RHACM Hub Console**, they can look at the global utility header in the top-right corner and click the **Application Launcher grid icon (9-dot menu)**.
-4. Drop down the menu to see a dedicated section titled **"Vendor Developer Tools"** with a direct, branded link labeled **"Vendor A Quay Registry"**.
-5. The vendor clicks the shortcut. Red Hat Quay intercepts the login redirect, runs a silent OIDC handshake with the same central IdP, and leverages **Just-In-Time (JIT) provisioning** to dynamically auto-create their Quay user profile and private organization 
-repository space (`/vendor-a`) on the fly.
-
-### Phase 4: Self-Service Application Deployment (The Workload Story)
-Once the identity and infrastructure are established, showcase how the vendor can independently deploy authorized multi-cluster software workloads using ACM's GitOps subscription model:
-
-1. Switch to or stay logged in as vendor-a-user inside the ACM Hub Console.
-2. Navigate to Applications and click the blue Create application button in the top right.
-3. Under the Repository Type (Source) selection field, select Git from the dropdown menu.
-4. Use the pre-configured subscription channels to point ACM to this repository. The user sets the path field to target the /example-vendor-applications directory.
-5. In the Destination field, the vendor enters their assigned sandbox namespace (vendor-a-apps).
-6. Click Save in the top right.
-
-The Application Topology Payoff: ACM instantly maps the Git repository and generates a live, interactive Topology Map on the screen. The vendor can watch in real-time as the subscription channel pulls sample-workload-manifest.yaml out of Git, verifies permissions, and spins up the application pods within their isolated namespace boundaries.
+# Onboard the vendor
+./onboard-vendor.sh --vendor vendor-a
+```
+The script accepts the following options:
+Option	Description	Default
+`--vendor`	Vendor identifier, lowercase with hyphens (required)	—
+`--quay-host`	Quay server hostname	`quay-server.apps.platform-customer.com`
+`--dry-run`	Print rendered YAML only, do not apply	—
+`--output <file>`	Write rendered YAML to file instead of applying	—
+`--template <file>`	Path to policy template file	`1-master-onboarding-policy.yaml`
+What the script provisions:
+Isolated namespace (`vendor-a-apps`) with tenant labels
+`RoleBinding` scoping `vendor-a-user` to `admin` within that namespace only
+`ResourceQuota` capping CPU, memory, pods, services, storage
+`LimitRange` setting default container-level resource requests and limits
+`NetworkPolicy` set: default-deny ingress/egress, allow intra-namespace, allow DNS, allow OpenShift router ingress
+`ConsoleLink` injecting a Quay registry shortcut into the ACM 9-dot application launcher
+ACM `Application` and `Subscription` pre-wiring the approved sample workload catalog into the vendor namespace
+> **Note:** The vendor user does not need to exist in OpenShift before this step. For SSO/OIDC users, OpenShift creates the shadow user automatically on first login. The `RoleBinding` waits and maps on that first login event.
+Phase 3: First-Time Login & JIT Payoff (Vendor Experience)
+Log in via a private browser window as the newly created vendor user:
+Navigate to the ACM hub console URL and select the SSO login option. Log in as `vendor-a-user`.
+OpenShift validates the token against the IdP, creates the shadow user, and maps them to the pre-staged `RoleBinding` — isolating them to their sandbox namespace instantly.
+In the ACM hub console, click the application launcher grid icon (9-dot menu) in the top-right header.
+A dedicated "Vendor Developer Tools" section appears with a branded "vendor-a Registry" shortcut link.
+Clicking the shortcut triggers a silent OIDC handshake with Quay. Quay's JIT provisioning automatically creates the vendor's user profile and private organization (`/vendor-a`) on the fly — no manual registry setup required.
+Phase 4: Self-Service Application Deployment (Vendor Experience)
+The sample workload is already deployed and waiting when the vendor first logs in:
+In the ACM hub console, navigate to Applications.
+The `vendor-a-sample-app` application is already present, pre-wired by the onboarding script.
+Click the application to open the Topology view. The vendor sees a live, interactive graph showing their `ConfigMap`, `Deployment`, `Service`, and `Route` — all running within their isolated namespace.
+The `Route` provides a directly accessible URL the vendor can use to verify their workload is live.
+The vendor does not need to configure channels, set paths, or fill in destination namespaces. Everything is pre-staged and governed by ACM policy.
+---
+Tenant Isolation Summary
+Each onboarded vendor receives the following isolation guarantees, enforced continuously by ACM:
+Control	Mechanism	Scope
+Namespace isolation	`Namespace` CR	Per vendor
+Access control	`RoleBinding` → `admin` ClusterRole	Vendor namespace only
+Resource limits	`ResourceQuota` + `LimitRange`	Vendor namespace
+Network isolation	`NetworkPolicy` default-deny + selective allow	Vendor namespace
+Console isolation	`Console` CR perspective restriction	Cluster-wide (platform policy)
+Registry shortcut	`ConsoleLink`	Per vendor
+---
+ClusterSet Readiness
+The `Placement` in `1-master-onboarding-policy.yaml` currently targets `local-cluster` for single-cluster lab use. When you are ready to adopt ClusterSets:
+Add a `clusterSets` field to the `Placement` spec referencing your ClusterSet name
+Label your managed clusters accordingly
+No other changes to the policy or onboarding script are required.
+---
+Future Enhancements
+Red Hat Developer Hub integration: Replace the shell script with a Backstage Software Template for a full multi-step wizard UI, Git-native rendering, and audit trail
+AAP Survey integration: Wrap the onboarding script in an Ansible Job Template with a Survey for a form-driven UI without requiring Developer Hub
+Offboarding script: Mirror of `onboard-vendor.sh` to cleanly remove a vendor's policy, namespace, and all associated resources
+Additional approved workloads: Add more manifests under `example-vendor-applications/workloads/` to expand the vendor's self-service catalog
