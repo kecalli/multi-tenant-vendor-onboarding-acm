@@ -16,11 +16,13 @@ The repository remains flat, lightweight, and optimized for a clean, zero-copy-p
 
 ```text
 multi-tenant-vendor-onboarding-acm/
-├── README.md                            # Documentation and Live Demo Script
-├── 1-master-onboarding-policy.yaml      # Reusable Blueprint Policy (Dormant Template)
-└── example-vendor-applications/         # Isolated application subfolder for vendor self-service
-    ├── app-subscription-channel.yaml    # Pre-configured ACM Git Channel blueprint
-    └── sample-workload-manifest.yaml    # Example workload template selectable via dropdown wizard
+├── 0-platform-console-policy.yaml       # apply once, platform admin
+├── 1-master-onboarding-policy.yaml      # per-vendor, rendered by script
+└── example-vendor-applications/
+    ├── 0-vendor-app-channel.yaml        # apply once, platform admin
+    ├── 1-vendor-sample-app-subscription.yaml  # per-vendor, rendered by script
+    └── workloads/
+        └── sample-workload-manifest.yaml      # static, pulled by Subscription
 ```
 
 ---
