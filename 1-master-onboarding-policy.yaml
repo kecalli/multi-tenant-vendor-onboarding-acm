@@ -17,9 +17,9 @@
 #       modifying it per-vendor would cause policy conflicts and affect ALL users.
 #       Manage perspective visibility in a separate, one-time platform policy.
 #
-# ClusterSet readiness: The Placement below targets local-cluster today.
-#       When you adopt ClusterSets, add a `clusterSets` field to the Placement
-#       spec and label your clusters. No other changes needed.
+# ClusterSet readiness: The Placement below targets local-cluster in the
+#       'default' ClusterSet. When you adopt additional ClusterSets, update
+#       the clusterSets field and label your clusters accordingly.
 # =============================================================================
 
 apiVersion: policy.open-cluster-management.io/v1
@@ -234,12 +234,23 @@ spec:
                   imageURL: https://raw.githubusercontent.com/quay/quay/master/static/img/quay-horizontal-color.svg
 
 ---
+# =============================================================================
+# PLACEMENT — targets local-cluster in the 'default' ClusterSet.
+#
+# Requires a ManagedClusterSetBinding for 'default' in the
+# open-cluster-management-policies namespace (see 0-clusterset-binding.yaml).
+#
+# To adopt additional ClusterSets later, add entries to the clusterSets list
+# and label your managed clusters accordingly.
+# =============================================================================
 apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
 metadata:
   name: placement-onboard-generic-vendor
   namespace: open-cluster-management-policies
 spec:
+  clusterSets:
+  - default
   predicates:
   - requiredClusterSelector:
       labelSelector:

@@ -1,0 +1,20 @@
+# =============================================================================
+# ManagedClusterSetBinding
+#
+# Apply this ONCE as part of one-time platform setup.
+# Binds the 'default' ClusterSet to the open-cluster-management-policies
+# namespace, allowing Placements in that namespace to match managed clusters.
+#
+# Without this, Placements cannot see any clusters regardless of label selectors.
+#
+# Apply with:
+#   oc apply -f 0-clusterset-binding.yaml
+# =============================================================================
+ 
+apiVersion: cluster.open-cluster-management.io/v1beta2
+kind: ManagedClusterSetBinding
+metadata:
+  name: default
+  namespace: open-cluster-management-policies
+spec:
+  clusterSet: default
